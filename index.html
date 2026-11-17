@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko">
-<!-- version: v5 (2026-11-17) -->
+<!-- version: v6 (2026-11-17) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -254,7 +254,7 @@ img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; }
       <p class="t ctr f-light" data-fx="line" style="left:45px;top:1040px;width:801px;font-size:26.67px;line-height:1.5;letter-spacing:-.9px;--d:3.85s">"인곡타워"로 검색하시면 찾기 수월합니다 :)</p>
 
       <!-- map app links (네이버지도 · 카카오맵 · 티맵) — kept last so they sit above every layer -->
-      <a class="map-btn" data-map="naver" data-fx="pop" href="https://naver.me/xzxm7S4a" target="_blank" rel="noopener" style="left:553px;top:397px;--d:.75s" aria-label="네이버지도로 보기"><img src="assets/img/ic-naver.png" alt=""></a>
+      <a class="map-btn" data-map="naver" data-fx="pop" href="https://naver.me/x3cndGhb" target="_blank" rel="noopener" style="left:553px;top:397px;--d:.75s" aria-label="네이버지도로 보기"><img src="assets/img/ic-naver.png" alt=""></a>
       <a class="map-btn" data-map="kakao" data-fx="pop" href="https://place.map.kakao.com/20995567" target="_blank" rel="noopener" style="left:631px;top:397px;--d:.87s" aria-label="카카오맵으로 보기"><img src="assets/img/ic-kakao.png" alt=""></a>
       <a class="map-btn" data-map="tmap"  data-fx="pop" href="https://tmap.life/03e5e822" target="_blank" rel="noopener" style="left:709px;top:397px;--d:.99s" aria-label="티맵으로 보기"><img src="assets/img/ic-tmap.png" alt=""></a>
     </div>
@@ -306,7 +306,7 @@ img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; }
 const PLACE = { name: "마실 둔산점", lat: 36.3533793, lng: 127.3870743 };
 const MAPS = {
   naver: {
-    web: "https://naver.me/xzxm7S4a",
+    web: "https://naver.me/x3cndGhb",
     app: () => `nmap://place?lat=${PLACE.lat}&lng=${PLACE.lng}&name=${encodeURIComponent(PLACE.name)}&appname=${encodeURIComponent(location.hostname || "invitation")}`,
     pkg: "com.nhn.android.nmap",
   },
@@ -432,28 +432,45 @@ const MAPS = {
   (document.fonts ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve()).then(start);
 
   /* ───────── map links ─────────
-     PC     : the <a href> opens the web page in a new tab (default link behaviour)
-     Mobile : open the app directly; if it isn't installed, fall back to the web page */
+     PC        : the <a href> opens the web page in a new tab (default link behaviour)
+     Mobile    : open the app directly; if it isn't installed, fall back to the web page
+     KakaoTalk : the in-app browser closes itself when the invitation page itself is
+                 navigated to an app link, so the app link is opened from a separate
+                 in-app window instead — the invitation stays open underneath.        */
   const ua = navigator.userAgent;
   const isAndroid = /Android/i.test(ua);
   const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const inKakao = /KAKAOTALK/i.test(ua);
+
+  function appLink(m) {
+    const appUrl = m.app();
+    if (!isAndroid) return appUrl;
+    const [scheme, rest] = appUrl.split("://");
+    return `intent://${rest}#Intent;scheme=${scheme};action=android.intent.action.VIEW;`
+      + `category=android.intent.category.BROWSABLE;package=${m.pkg};`
+      + `S.browser_fallback_url=${encodeURIComponent(m.web)};end`;
+  }
 
   function openApp(m) {
-    const appUrl = m.app();
-    let timer = setTimeout(() => { if (!document.hidden) location.href = m.web; }, 1800);
-    const cancel = () => clearTimeout(timer);
-    document.addEventListener("visibilitychange", function h() {
-      if (document.hidden) { cancel(); document.removeEventListener("visibilitychange", h); }
-    });
-    addEventListener("pagehide", cancel, { once: true });
+    const link = appLink(m);
+    let left = false;
+    const markLeft = () => { left = true; };
+    document.addEventListener("visibilitychange", () => { if (document.hidden) markLeft(); }, { once: true });
+    addEventListener("pagehide", markLeft, { once: true });
+    addEventListener("blur", markLeft, { once: true });
 
-    if (isAndroid) {
-      const [scheme, rest] = appUrl.split("://");
-      location.href = `intent://${rest}#Intent;scheme=${scheme};action=android.intent.action.VIEW;`
-        + `category=android.intent.category.BROWSABLE;package=${m.pkg};`
-        + `S.browser_fallback_url=${encodeURIComponent(m.web)};end`;
+    // app not installed → show the web map (in KakaoTalk: in a new window, keeping the invitation)
+    setTimeout(() => {
+      if (left || document.hidden) return;
+      if (inKakao) window.open(m.web, "_blank");
+      else location.href = m.web;
+    }, 2000);
+
+    if (inKakao) {
+      const w = window.open(link, "_blank");
+      if (!w) location.href = link;          // popup refused → plain navigation
     } else {
-      location.href = appUrl;
+      location.href = link;
     }
   }
 
