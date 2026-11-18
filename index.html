@@ -1,12 +1,15 @@
 <!doctype html>
 <html lang="ko">
-<!-- version: v6 (2026-11-17) -->
+<!-- version: v8 (2026-11-18) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>두 가족의 만남에 초대합니다</title>
 <meta name="description" content="2026년 11월 22일(일) 11시 30분 · 대전 마실">
 <meta name="theme-color" content="#FAF9F8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <!-- 카카오톡/문자 공유 미리보기 -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://eunyu-da.github.io/invitation/">
@@ -251,7 +254,6 @@ img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; }
       <p class="t f-bold" data-fx="left" style="left:464px;top:661px;font-size:33.33px;line-height:1.39;color:#000;--d:3.05s">마실</p>
 
       <p class="t ctr f-light" data-split="3.3 .08" style="left:43px;top:983px;width:805px;font-size:40px;line-height:1.5;letter-spacing:-.9px">대전 서구 둔산중로 74 인곡타워 2층</p>
-      <p class="t ctr f-light" data-fx="line" style="left:45px;top:1040px;width:801px;font-size:26.67px;line-height:1.5;letter-spacing:-.9px;--d:3.85s">"인곡타워"로 검색하시면 찾기 수월합니다 :)</p>
 
       <!-- map app links (네이버지도 · 카카오맵 · 티맵) — kept last so they sit above every layer -->
       <a class="map-btn" data-map="naver" data-fx="pop" href="https://naver.me/x3cndGhb" target="_blank" rel="noopener" style="left:553px;top:397px;--d:.75s" aria-label="네이버지도로 보기"><img src="assets/img/ic-naver.png" alt=""></a>
@@ -274,18 +276,18 @@ img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; }
   </section>
 
   <!-- ═════════ 5. Quote — flowers first, then the quote word by word ═════════ -->
-  <section class="slide" aria-label="맺음말">
+  <section class="slide" aria-label="인사">
     <div class="stage">
       <div class="el sway" data-fx="bloom" style="left:-137px;top:61px;width:360px;height:537px;rotate:60deg;--d:0s;--sd:-1s"><img src="assets/img/daisy-3.png" alt=""></div>
-      <div class="el sway" data-fx="bloom" style="left:569px;top:37px;width:333px;height:537px;rotate:319deg;--d:.15s;--sd:-3s"><img src="assets/img/daisy-6.png" alt=""></div>
+      <div class="el sway" data-fx="bloom" style="left:569px;top:37px;width:333px;height:537px;rotate:319deg;--d:.15s;--sd:-3s"><img src="assets/img/daisy-4.png" alt=""></div>
       <div class="el sway" data-fx="bloom" style="left:640px;top:848px;width:252px;height:427px;--d:.3s;--sd:-2s"><img src="assets/img/daisy-5.png" alt=""></div>
       <div class="el sway" data-fx="bloom" style="left:-132px;top:1016px;width:395px;height:537px;--d:.45s;--sd:-4s"><img src="assets/img/daisy-2.png" alt=""></div>
       <div class="el sway" data-fx="bloom" style="left:651px;top:1067px;width:139px;height:411px;--d:.6s;--sd:-5s"><img src="assets/img/bud-2.png" alt=""></div>
 
-      <blockquote class="t ctr f-hand" style="left:107px;top:520px;width:679px;white-space:normal;word-break:keep-all">
-        <p data-split="1.1 .09" style="font-size:53.33px;line-height:1.1">“남은 인생을 함께 보내고 싶은 사람을 만났다면, 남은 인생이 하루라도 빨리 시작되기를 바라게 된다.”</p>
-        <p data-fx="line" style="font-size:40px;line-height:1.1;--d:2.8s">영화 《해리가 샐리를 만났을 때》(1989) 중</p>
-      </blockquote>
+      <div class="t ctr f-hand" style="left:104px;top:492px;width:683px;line-height:1.1">
+        <p data-split="1.1 .14" style="font-size:66.65px">좋은 날 반가운 마음으로<br>만나뵙겠습니다</p>
+        <p data-split="2.1 .16" style="font-size:53.32px;margin-top:73px">조건희, 최은진 올림</p>
+      </div>
     </div>
   </section>
 
@@ -321,6 +323,27 @@ const MAPS = {
     pkg: "com.skt.tmap.ku",
   },
 };
+
+/* ───────── 자동 최신화 ─────────
+   휴대폰·카카오톡이 예전 화면을 저장해 두고 보여주는 경우를 막기 위해,
+   열릴 때 서버의 최신 버전을 확인하고 더 새 버전이 있으면 그걸로 다시 불러와요.
+   (업데이트할 때 위쪽 <!-- version: vN --> 주석만 올리면 자동으로 동작) */
+(() => {
+  // the <!-- version: vN --> comment sits right inside <html>, so it is part of its innerHTML
+  const current = (document.documentElement.innerHTML.match(/version: (v\d+)/) || [])[1];
+  if (!current || location.protocol === "file:") return;
+  fetch(location.pathname + "?check=" + Date.now(), { cache: "no-store" })
+    .then((r) => r.ok ? r.text() : "")
+    .then((txt) => {
+      const latest = (txt.match(/version: (v\d+)/) || [])[1];
+      if (!latest || latest === current) return;
+      const url = new URL(location.href);
+      if (url.searchParams.get("v") === latest) return;      // already tried once — avoid loops
+      url.searchParams.set("v", latest);
+      location.replace(url.toString());
+    })
+    .catch(() => {});
+})();
 
 (() => {
   const STAGE_W = 891, STAGE_H = 1260;
@@ -432,46 +455,54 @@ const MAPS = {
   (document.fonts ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve()).then(start);
 
   /* ───────── map links ─────────
-     PC        : the <a href> opens the web page in a new tab (default link behaviour)
-     Mobile    : open the app directly; if it isn't installed, fall back to the web page
-     KakaoTalk : the in-app browser closes itself when the invitation page itself is
-                 navigated to an app link, so the app link is opened from a separate
-                 in-app window instead — the invitation stays open underneath.        */
+     PC            : the <a href> opens the web page in a new tab (default link behaviour)
+     Mobile browser: open the app directly; if it isn't installed, go to the web page
+     In-app browser (KakaoTalk etc.): navigating the invitation page itself to an app
+                     link makes KakaoTalk close its browser and return to the chat.
+                     So the app link is fired from a hidden inner frame instead — the
+                     invitation page never leaves. If no app opens, the web map is
+                     opened in a new window on top of the invitation.               */
   const ua = navigator.userAgent;
   const isAndroid = /Android/i.test(ua);
   const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const inKakao = /KAKAOTALK/i.test(ua);
+  const inApp = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|BAND\//i.test(ua);
 
-  function appLink(m) {
+  function appLink(m, withFallback) {
     const appUrl = m.app();
     if (!isAndroid) return appUrl;
     const [scheme, rest] = appUrl.split("://");
     return `intent://${rest}#Intent;scheme=${scheme};action=android.intent.action.VIEW;`
       + `category=android.intent.category.BROWSABLE;package=${m.pkg};`
-      + `S.browser_fallback_url=${encodeURIComponent(m.web)};end`;
+      + (withFallback ? `S.browser_fallback_url=${encodeURIComponent(m.web)};` : "")
+      + "end";
+  }
+
+  function fireInFrame(url) {
+    const f = document.createElement("iframe");
+    f.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden";
+    f.src = url;
+    document.body.appendChild(f);
+    setTimeout(() => f.remove(), 3000);
   }
 
   function openApp(m) {
-    const link = appLink(m);
     let left = false;
     const markLeft = () => { left = true; };
-    document.addEventListener("visibilitychange", () => { if (document.hidden) markLeft(); }, { once: true });
+    const onVis = () => { if (document.hidden) markLeft(); };
+    document.addEventListener("visibilitychange", onVis);
     addEventListener("pagehide", markLeft, { once: true });
     addEventListener("blur", markLeft, { once: true });
 
-    // app not installed → show the web map (in KakaoTalk: in a new window, keeping the invitation)
+    // no app opened → web map (in-app browsers: new window, so the invitation stays)
     setTimeout(() => {
+      document.removeEventListener("visibilitychange", onVis);
       if (left || document.hidden) return;
-      if (inKakao) window.open(m.web, "_blank");
+      if (inApp) { if (!window.open(m.web, "_blank")) location.href = m.web; }
       else location.href = m.web;
-    }, 2000);
+    }, 2200);
 
-    if (inKakao) {
-      const w = window.open(link, "_blank");
-      if (!w) location.href = link;          // popup refused → plain navigation
-    } else {
-      location.href = link;
-    }
+    if (inApp) fireInFrame(appLink(m, false));
+    else location.href = appLink(m, true);
   }
 
   document.querySelectorAll(".map-btn").forEach((a) => {
