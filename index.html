@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko">
-<!-- version: v8 (2026-11-18) -->
+<!-- version: v9 (2026-11-18) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -308,17 +308,20 @@ img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; }
 const PLACE = { name: "마실 둔산점", lat: 36.3533793, lng: 127.3870743 };
 const MAPS = {
   naver: {
-    web: "https://naver.me/x3cndGhb",
-    app: () => `nmap://place?lat=${PLACE.lat}&lng=${PLACE.lng}&name=${encodeURIComponent(PLACE.name)}&appname=${encodeURIComponent(location.hostname || "invitation")}`,
+    web: "https://naver.me/x3cndGhb",                                   // PC
+    inapp: "https://m.place.naver.com/restaurant/33232613/home",        // 카카오톡 등 앱 안 브라우저
+    app: () => `nmap://search?query=${encodeURIComponent("대전 마실")}&appname=${encodeURIComponent(location.hostname || "invitation")}`,
     pkg: "com.nhn.android.nmap",
   },
   kakao: {
     web: "https://place.map.kakao.com/20995567",
+    inapp: "https://place.map.kakao.com/20995567",
     app: () => "kakaomap://place?id=20995567",
     pkg: "net.daum.android.map",
   },
   tmap: {
     web: "https://tmap.life/03e5e822",
+    inapp: "https://tmap.life/03e5e822",
     app: () => `tmap://route?goalname=${encodeURIComponent(PLACE.name)}&goalx=${PLACE.lng}&goaly=${PLACE.lat}`,
     pkg: "com.skt.tmap.ku",
   },
@@ -455,61 +458,50 @@ const MAPS = {
   (document.fonts ? Promise.race([document.fonts.ready, new Promise(r => setTimeout(r, 1500))]) : Promise.resolve()).then(start);
 
   /* ───────── map links ─────────
-     PC            : the <a href> opens the web page in a new tab (default link behaviour)
-     Mobile browser: open the app directly; if it isn't installed, go to the web page
-     In-app browser (KakaoTalk etc.): navigating the invitation page itself to an app
-                     link makes KakaoTalk close its browser and return to the chat.
-                     So the app link is fired from a hidden inner frame instead — the
-                     invitation page never leaves. If no app opens, the web map is
-                     opened in a new window on top of the invitation.               */
+     PC             : the <a href> opens the web page in a new tab (default link behaviour)
+     Mobile browser : open the app directly; if it isn't installed, go to the web page
+     In-app browser (KakaoTalk etc.): KakaoTalk closes its own browser whenever the page
+                      hands off to another app, so there we open the web map instead —
+                      the invitation stays and "back" returns to it.                  */
   const ua = navigator.userAgent;
   const isAndroid = /Android/i.test(ua);
   const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const inApp = /KAKAOTALK|NAVER\(inapp|Instagram|FBAN|FBAV|Line\/|DaumApps|everytimeApp|BAND\//i.test(ua);
 
-  function appLink(m, withFallback) {
-    const appUrl = m.app();
-    if (!isAndroid) return appUrl;
-    const [scheme, rest] = appUrl.split("://");
-    return `intent://${rest}#Intent;scheme=${scheme};action=android.intent.action.VIEW;`
-      + `category=android.intent.category.BROWSABLE;package=${m.pkg};`
-      + (withFallback ? `S.browser_fallback_url=${encodeURIComponent(m.web)};` : "")
-      + "end";
-  }
-
-  function fireInFrame(url) {
-    const f = document.createElement("iframe");
-    f.style.cssText = "position:absolute;width:0;height:0;border:0;visibility:hidden";
-    f.src = url;
-    document.body.appendChild(f);
-    setTimeout(() => f.remove(), 3000);
-  }
-
   function openApp(m) {
+    const appUrl = m.app();
     let left = false;
     const markLeft = () => { left = true; };
     const onVis = () => { if (document.hidden) markLeft(); };
     document.addEventListener("visibilitychange", onVis);
     addEventListener("pagehide", markLeft, { once: true });
     addEventListener("blur", markLeft, { once: true });
-
-    // no app opened → web map (in-app browsers: new window, so the invitation stays)
-    setTimeout(() => {
+    setTimeout(() => {                                   // app not installed → web map
       document.removeEventListener("visibilitychange", onVis);
-      if (left || document.hidden) return;
-      if (inApp) { if (!window.open(m.web, "_blank")) location.href = m.web; }
-      else location.href = m.web;
-    }, 2200);
+      if (!left && !document.hidden) location.href = m.web;
+    }, 2000);
 
-    if (inApp) fireInFrame(appLink(m, false));
-    else location.href = appLink(m, true);
+    if (isAndroid) {
+      const [scheme, rest] = appUrl.split("://");
+      location.href = `intent://${rest}#Intent;scheme=${scheme};action=android.intent.action.VIEW;`
+        + `category=android.intent.category.BROWSABLE;package=${m.pkg};`
+        + `S.browser_fallback_url=${encodeURIComponent(m.web)};end`;
+    } else {
+      location.href = appUrl;
+    }
+  }
+
+  function openInApp(m) {
+    const w = window.open(m.inapp, "_blank");            // new layer on top of the invitation
+    if (!w) location.href = m.inapp;
   }
 
   document.querySelectorAll(".map-btn").forEach((a) => {
     a.addEventListener("click", (e) => {
       if (!isAndroid && !isIOS) return;          // PC → normal link to the web page
       e.preventDefault();
-      openApp(MAPS[a.dataset.map]);
+      const m = MAPS[a.dataset.map];
+      inApp ? openInApp(m) : openApp(m);
     });
   });
 })();
