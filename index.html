@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko">
-<!-- version: v9 (2026-11-18) -->
+<!-- version: v10 (2026-11-18) -->
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -460,9 +460,7 @@ const MAPS = {
   /* ───────── map links ─────────
      PC             : the <a href> opens the web page in a new tab (default link behaviour)
      Mobile browser : open the app directly; if it isn't installed, go to the web page
-     In-app browser (KakaoTalk etc.): KakaoTalk closes its own browser whenever the page
-                      hands off to another app, so there we open the web map instead —
-                      the invitation stays and "back" returns to it.                  */
+     In-app browser (KakaoTalk etc.): web map in a new window + launch the app (see openInApp) */
   const ua = navigator.userAgent;
   const isAndroid = /Android/i.test(ua);
   const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -491,9 +489,21 @@ const MAPS = {
     }
   }
 
+  /* In-app browser (KakaoTalk etc.): 1) open the web map in a new window on top of the
+     invitation, so it stays in KakaoTalk ("back" → invitation), then 2) launch the app. */
   function openInApp(m) {
-    const w = window.open(m.inapp, "_blank");            // new layer on top of the invitation
-    if (!w) location.href = m.inapp;
+    const w = window.open(m.inapp, "_blank");
+    const appUrl = m.app();
+    setTimeout(() => {
+      if (isAndroid) {
+        const [scheme, rest] = appUrl.split("://");
+        location.href = `intent://${rest}#Intent;scheme=${scheme};action=android.intent.action.VIEW;`
+          + `category=android.intent.category.BROWSABLE;package=${m.pkg};end`;
+      } else {
+        location.href = appUrl;
+      }
+    }, w ? 400 : 0);
+    if (!w) setTimeout(() => { if (!document.hidden) location.href = m.inapp; }, 2000);  // popup blocked & no app
   }
 
   document.querySelectorAll(".map-btn").forEach((a) => {
